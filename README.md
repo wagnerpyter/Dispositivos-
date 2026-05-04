@@ -1,0 +1,2 @@
+# Dispositivos-
+Dispositivos da Recusa
