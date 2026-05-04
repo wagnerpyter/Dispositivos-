@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>[nome]</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=DM+Mono:wght@300;400&display=swap');
+
+:root {
+  --bg:     #010306;
+  --ink:    #d8d2c8;
+  --dim:    rgba(216,210,200,0.22);
+  --amber:  rgba(201,165,90,0.55);
+  --amber2: rgba(201,165,90,0.18);
+  --cold:   rgba(155,185,210,0.35);
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  width:100%; height:100%;
+  background: var(--bg);
+  color: var(--ink);
+  overflow: hidden;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  cursor: none;
+}
+
+/* custom cursor dot */
+#cur {
+  position: fixed;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--cold);
+  pointer-events: none;
+  transform: translate(-50%,-50%);
+  transition: opacity 0.3s;
+  z-index: 999;
+  mix-blend-mode: screen;
+}
+
+canvas#bg {
+  position: fixed;
+  inset: 0;
+  width: 100%; height: 100%;
+  opacity: 0.35;
+}
+
+.wrap {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: clamp(32px, 7vw, 64px);
+  padding-bottom: clamp(40px, 9vh, 80px);
+}
+
+/* name placeholder */
+.name {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(2.8rem, 9vw, 6rem);
+  font-weight: 400;
+  line-height: 1.0;
+  color: rgba(216,210,200,0.12);
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+  position: relative;
+  user-select: none;
+}
+
+.name::after {
+  content: '[nome]';
+  position: absolute;
+  left: 0; top: 0;
+  color: rgba(216,210,200,0.08);
+  font-style: normal;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.22em;
+  letter-spacing: 0.18em;
+  top: -1.4em;
+  white-space: nowrap;
+}
+
+/* subtitle */
+.sub {
+  font-family: 'DM Mono', monospace;
+  font-weight: 300;
+  font-size: clamp(0.55rem, 1.8vw, 0.72rem);
+  color: rgba(216,210,200,0.18);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  margin-bottom: clamp(36px, 6vh, 56px);
+}
+
+/* obra list */
+.obras {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-bottom: clamp(40px, 8vh, 64px);
+}
+
+.obra-item {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 11px 0;
+  border-top: 1px solid rgba(216,210,200,0.06);
+  cursor: none;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.obra-item::before {
+  content: '';
+  position: absolute;
+  left: -100%; top: 0;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(155,185,210,0.04), transparent);
+  transition: left 0.55s ease;
+}
+
+.obra-item:hover::before { left: 100%; }
+
+.obra-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  font-weight: 300;
+  color: rgba(201,165,90,0.4);
+  letter-spacing: 0.12em;
+  min-width: 28px;
+  transition: color 0.3s;
+}
+
+.obra-title {
+  font-family: 'EB Garamond', serif;
+  font-size: clamp(1.1rem, 3.2vw, 1.5rem);
+  font-weight: 400;
+  color: rgba(216,210,200,0.55);
+  letter-spacing: 0.01em;
+  transition: color 0.3s;
+  flex: 1;
+}
+
+.obra-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.55rem;
+  font-weight: 300;
+  letter-spacing: 0.14em;
+  color: rgba(155,185,210,0.25);
+  text-transform: uppercase;
+  transition: color 0.3s;
+  align-self: center;
+}
+
+.obra-item:hover .obra-num   { color: rgba(201,165,90,0.8); }
+.obra-item:hover .obra-title { color: rgba(216,210,200,0.92); }
+.obra-item:hover .obra-tag   { color: rgba(155,185,210,0.55); }
+
+/* active obra — Dispositivo da Recusa */
+.obra-item.active .obra-title { color: rgba(216,210,200,0.88); }
+.obra-item.active .obra-tag   { color: rgba(201,165,90,0.55); }
+
+/* arrow indicator */
+.obra-arrow {
+  font-size: 0.65rem;
+  color: rgba(216,210,200,0.12);
+  transition: color 0.3s, transform 0.3s;
+  font-family: 'DM Mono', monospace;
+}
+.obra-item:hover .obra-arrow {
+  color: rgba(216,210,200,0.5);
+  transform: translateX(4px);
+}
+
+/* year mark */
+.year {
+  position: fixed;
+  top: clamp(24px, 5vh, 48px);
+  right: clamp(24px, 5vw, 48px);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.58rem;
+  font-weight: 300;
+  color: rgba(216,210,200,0.12);
+  letter-spacing: 0.18em;
+}
+
+/* loading bar for enter transition */
+#bar {
+  position: fixed;
+  bottom: 0; left: 0;
+  height: 1px;
+  width: 0%;
+  background: linear-gradient(90deg, transparent, rgba(155,185,210,0.6), rgba(201,165,90,0.4));
+  transition: width 0.6s ease;
+  pointer-events: none;
+}
+
+/* fade overlay for transition */
+#veil {
+  position: fixed;
+  inset: 0;
+  background: #010306;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.7s ease;
+  z-index: 100;
+}
+#veil.on { opacity: 1; pointer-events: all; }
+
+/* subtle grain */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* entry animation */
+@keyframes fadeUp {
+  from { opacity:0; transform: translateY(14px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.wrap > * {
+  opacity: 0;
+  animation: fadeUp 1.1s ease forwards;
+}
+.name  { animation-delay: 0.2s; }
+.sub   { animation-delay: 0.5s; }
+.obras { animation-delay: 0.8s; }
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+<div id="cur"></div>
+<div id="bar"></div>
+<div id="veil"></div>
+
+<span class="year">2026</span>
+
+<div class="wrap">
+  <div class="name">—</div>
+  <div class="sub">arte interativa digital</div>
+
+  <div class="obras">
+    <a class="obra-item active" href="dispositivo_da_recusa.html" id="link-dr">
+      <span class="obra-num">01</span>
+      <span class="obra-title">Dispositivo da Recusa</span>
+      <span class="obra-tag">toque · instalação</span>
+      <span class="obra-arrow">→</span>
+    </a>
+    <div class="obra-item" style="opacity:0.35; cursor:default; pointer-events:none;">
+      <span class="obra-num">02</span>
+      <span class="obra-title" style="font-style:italic; color:rgba(216,210,200,0.22);">em desenvolvimento</span>
+      <span class="obra-tag"></span>
+      <span class="obra-arrow"></span>
+    </div>
+    <div class="obra-item" style="opacity:0.2; cursor:default; pointer-events:none; border-bottom:1px solid rgba(216,210,200,0.06);">
+      <span class="obra-num">03</span>
+      <span class="obra-title" style="font-style:italic; color:rgba(216,210,200,0.15);">em desenvolvimento</span>
+      <span class="obra-tag"></span>
+      <span class="obra-arrow"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Cursor ──────────────────────────────────────────────
+const cur = document.getElementById('cur');
+document.addEventListener('mousemove', e => {
+  cur.style.left = e.clientX + 'px';
+  cur.style.top  = e.clientY + 'px';
+});
+
+// ── Background — sparse drifting organisms ───────────────
+const cv  = document.getElementById('bg');
+const ctx = cv.getContext('2d');
+let W, H;
+function resize() {
+  W = cv.width  = window.innerWidth;
+  H = cv.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+const M = 180;
+const px = new Float32Array(M), py = new Float32Array(M);
+const vx = new Float32Array(M), vy = new Float32Array(M);
+const ps = new Float32Array(M), pt = new Uint8Array(M);
+const pw = new Float32Array(M);
+for (let i = 0; i < M; i++) {
+  px[i] = Math.random() * (typeof W !== 'undefined' ? W : 400);
+  py[i] = Math.random() * (typeof H !== 'undefined' ? H : 800);
+  const a = Math.random() * Math.PI * 2;
+  const s = 0.04 + Math.random() * 0.09;
+  vx[i] = Math.cos(a) * s; vy[i] = Math.sin(a) * s;
+  ps[i] = 0.7 + Math.random() * 1.8;
+  pt[i] = Math.random() < 0.3 ? 1 : 0;
+  pw[i] = Math.random();
+}
+
+function bgLoop() {
+  ctx.clearRect(0, 0, W, H);
+  ctx.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < M; i++) {
+    px[i] += vx[i]; py[i] += vy[i];
+    vx[i] += (Math.random()-0.5)*0.004;
+    vy[i] += (Math.random()-0.5)*0.004;
+    if (px[i] < 0) px[i] = W; if (px[i] > W) px[i] = 0;
+    if (py[i] < 0) py[i] = H; if (py[i] > H) py[i] = 0;
+
+    const w = pw[i];
+    const R = (140 + w*55)|0, G = (165 + w*20)|0, B = (195 - w*60)|0;
+    ctx.globalAlpha = 0.18 + w * 0.1;
+
+    if (pt[i] === 0) {
+      ctx.beginPath();
+      ctx.arc(px[i], py[i], ps[i], 0, 6.2832);
+      ctx.fillStyle = `rgb(${R},${G},${B})`;
+      ctx.fill();
+    } else {
+      ctx.strokeStyle = `rgb(${R},${G},${B})`;
+      ctx.lineWidth = ps[i] * 0.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(px[i]-ps[i]*2.5, py[i]);
+      ctx.lineTo(px[i]+ps[i]*2.5, py[i]);
+      ctx.stroke();
+    }
+  }
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(bgLoop);
+}
+bgLoop();
+
+// ── Transition to work ───────────────────────────────────
+const linkDr = document.getElementById('link-dr');
+const bar    = document.getElementById('bar');
+const veil   = document.getElementById('veil');
+
+linkDr.addEventListener('click', e => {
+  e.preventDefault();
+  bar.style.width = '100%';
+  setTimeout(() => { veil.classList.add('on'); }, 500);
+  setTimeout(() => { window.location.href = linkDr.href; }, 1100);
+});
+</script>
+</body>
+</html>
